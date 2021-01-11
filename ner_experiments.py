@@ -145,6 +145,9 @@ def test_ner(base_path, embeddings, dataset="conll_en"):
 
 def eval_pooledAkbik2019(use_fast=True, use_glove=True, fn="", dataset="conll_en"):
     """ run test_ner for the original pooled flair embeddings - make sure EMBEDFIRST = False!"""
+    global EMBEDFIRST  # from the way these embeddings are internally set up, they can't be used to embed the corpus beforehand
+    embedfirst_temp = EMBEDFIRST
+    EMBEDFIRST = False
     embeddings = []
     if use_glove:
         embeddings.append(WordEmbeddings('glove'))
@@ -160,6 +163,7 @@ def eval_pooledAkbik2019(use_fast=True, use_glove=True, fn="", dataset="conll_en
         embeddings[i].static_embeddings = True
     fname = "en_flair_pooled_fast%i_glove%i%s" % (int(use_fast), int(use_glove), fn)
     test_ner(os.path.join("results/ner_context/", fname), embeddings, dataset=dataset)
+    EMBEDFIRST = embedfirst_temp
 
 
 def get_transformer(name="bert-base-uncased"):
@@ -277,7 +281,7 @@ if __name__ == '__main__':
                         eval_evolving_transformer(name=transformer, stacked=stacked, evolving=True, alpha=alpha, fn="_%i" % i, dataset=dataset)
                         torch.cuda.empty_cache()
 
-    if True:
+    if False:
         # run flair with additional glove embeddings
         for stacked in [False, True]:
             for alpha in [None, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.15, 0.2, 0.25, 0.34, 0.5, ("doc", None), ("doc", 0.25), ("doc", 0.34), ("doc", 0.5)]:
@@ -288,8 +292,6 @@ if __name__ == '__main__':
                     torch.cuda.empty_cache()
 
     if False:
-        #global EMBEDFIRST  # from the way these embeddings are internally set up, they can't be used to embed the corpus beforehand
-        EMBEDFIRST = False
         # use original pooled embeddings
         for use_fast in [True, False]:
             for use_glove in [False, True]:
