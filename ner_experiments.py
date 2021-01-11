@@ -13,7 +13,7 @@ from flair.trainers import ModelTrainer
 from flair.training_utils import store_embeddings
 from flair.embeddings import WordEmbeddings, TransformerWordEmbeddings, ELMoEmbeddings, FlairEmbeddings, StackedEmbeddings, PooledFlairEmbeddings
 
-from evolvemb import DummyEmbeddings, GlobalAvgEmbeddings, EvolvingEmbeddings, preprocess_token
+from evolvemb import DummyEmbeddings, GlobalAvgEmbeddings, EvolvingEmbeddings, _preprocess_token
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
@@ -28,7 +28,7 @@ def preprocess_sentences(sentences: List[Sentence], to_lower=True, norm_num=True
     temp_sentences = pycopy.deepcopy(sentences) if copy else sentences
     for sentence in temp_sentences:
         for t in sentence:
-            t.text = preprocess_token(t.text, to_lower, norm_num, num)
+            t.text = _preprocess_token(t.text, to_lower, norm_num, num)
     return temp_sentences
 
 
@@ -223,9 +223,9 @@ def eval_evolving_transformer(name="bert-base-uncased", add_glove=False, stacked
     """ run test_ner for evolving embeddings based on a transformer model """
     local_embeddings = get_transformer(name)
     if isinstance(local_embeddings, list):
-        global_emb, gname = get_global_evolving(StackedEmbeddings(local_embeddings), evolving=evolving, alpha=alpha, dataset=dataset)
+        global_emb, gname = get_global_evolving(StackedEmbeddings(deepcopy(local_embeddings)), evolving=evolving, alpha=alpha, dataset=dataset)
     else:
-        global_emb, gname = get_global_evolving(local_embeddings, evolving=evolving, alpha=alpha, dataset=dataset)
+        global_emb, gname = get_global_evolving(deepcopy(local_embeddings), evolving=evolving, alpha=alpha, dataset=dataset)
         local_embeddings = [local_embeddings]
     if add_glove:
         local_embeddings.append(WordEmbeddings('glove'))
@@ -277,7 +277,7 @@ if __name__ == '__main__':
                         eval_evolving_transformer(name=transformer, stacked=stacked, evolving=True, alpha=alpha, fn="_%i" % i, dataset=dataset)
                         torch.cuda.empty_cache()
 
-    if False:
+    if True:
         # run flair with additional glove embeddings
         for stacked in [False, True]:
             for alpha in [None, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.15, 0.2, 0.25, 0.34, 0.5, ("doc", None), ("doc", 0.25), ("doc", 0.34), ("doc", 0.5)]:
@@ -288,7 +288,7 @@ if __name__ == '__main__':
                     torch.cuda.empty_cache()
 
     if False:
-        global EMBEDFIRST  # from the way these embeddings are internally set up, they can't be used to embed the corpus beforehand
+        #global EMBEDFIRST  # from the way these embeddings are internally set up, they can't be used to embed the corpus beforehand
         EMBEDFIRST = False
         # use original pooled embeddings
         for use_fast in [True, False]:
