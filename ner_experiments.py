@@ -231,12 +231,14 @@ def eval_evolving_transformer(name="bert-base-uncased", add_glove=False, stacked
     else:
         global_emb, gname = get_global_evolving(deepcopy(local_embeddings), evolving=evolving, alpha=alpha, dataset=dataset)
         local_embeddings = [local_embeddings]
-    if add_glove:
-        local_embeddings.append(WordEmbeddings('glove'))
-        name = "glove+%s" % name
+    if stacked or add_glove:
+        global_emb = [global_emb]
+        if add_glove:
+            global_emb.append(WordEmbeddings('glove'))
+            name = "glove+%s" % name
     if stacked:
         fname = "%s_%s_stacked_%s%s" % (dataset.split("_")[1], name.split("-")[0], gname, fn)
-        test_ner(os.path.join("results/ner_context/", fname), local_embeddings + [global_emb], dataset=dataset)
+        test_ner(os.path.join("results/ner_context/", fname), local_embeddings + global_emb, dataset=dataset)
     else:
         fname = "%s_%s_%s%s" % (dataset.split("_")[1], name.split("-")[0], gname, fn)
         test_ner(os.path.join("results/ner_context/", fname), global_emb, dataset=dataset)
