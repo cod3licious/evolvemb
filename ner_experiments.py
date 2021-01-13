@@ -177,8 +177,10 @@ def get_transformer(name="bert-base-uncased"):
     """
     if name == "elmo":
         embedding = ELMoEmbeddings("small", embedding_mode="average")
-    elif name == "flair":
+    elif name == "flairfast":
         embedding = [FlairEmbeddings('news-forward-fast'),  FlairEmbeddings('news-backward-fast')]
+    elif name == "flair":
+        embedding = [FlairEmbeddings('news-forward'),  FlairEmbeddings('news-backward')]
     else:
         # name: bert-base-uncased; roberta-base
         # bert-base-german-cased for german conll task
@@ -248,7 +250,7 @@ if __name__ == '__main__':
 
     if False:
         # normal experiments with all models
-        for transformer in ["bert-base-uncased", "roberta-base", "elmo", "flair", "bert-base-german-cased"]:
+        for transformer in ["bert-base-uncased", "roberta-base", "elmo", "flairfast", "bert-base-german-cased"]:
             if "german" in transformer:
                 dataset = "conll_de"
             else:
@@ -263,7 +265,7 @@ if __name__ == '__main__':
 
     if False:
         # same as above just with multiple random seeds, i.e., to reproduce the experiments from the paper
-        for transformer in ["bert-base-uncased", "roberta-base", "elmo", "flair", "bert-base-german-cased"]:
+        for transformer in ["bert-base-uncased", "roberta-base", "elmo", "flairfast", "bert-base-german-cased"]:
             if "german" in transformer:
                 dataset = "conll_de"
             else:
