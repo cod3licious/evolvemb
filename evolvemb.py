@@ -67,7 +67,7 @@ def _get_sentence_embeddings_flair(embedding, sentence):
     # embed words in sentence
     embedding.embed(s)
     # extract and return embedding matrix
-    return np.vstack([t.embedding.cpu().numpy() for t in s])
+    return np.vstack([t.embedding.cpu().detach().numpy() for t in s])
 
 
 class EmbeddingInputModel:
@@ -339,7 +339,7 @@ class EvolvingEmbeddings(TokenEmbeddings):
         self.token_counter = np.minimum(self.token_counter, self.max_count)
         # get contextualized embeddings for all words in the sentence
         context_embeddings = _get_sentence_embeddings_flair(self.local_embeddings, sentence)
-        # update evolving embeddings - for some reason this is faster than np.add.at(self.embeddings, [... vidx ...], context_embeddings)
+        # update evolving embeddings
         for i, vidx in enumerate(self.input_model.get_index(t) for t in sentence):
             self.embeddings[vidx, :] = (self.token_counter[vidx] * self.embeddings[vidx, :] + context_embeddings[i]) / (self.token_counter[vidx] + 1)
             # increase counter

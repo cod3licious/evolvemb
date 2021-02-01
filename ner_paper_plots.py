@@ -78,7 +78,7 @@ if __name__ == '__main__':
     x_d_st_std  = 100*np.array([0.0008, 0.0013, 0.0019, 0.0011, 0.0007, 0.0005, 0.0007])
     plot_results(x_local, x_local_std, x_g_mean, x_g_std, x_g_st_mean, x_g_st_std, x_d_mean, x_d_std, x_d_st_mean, x_d_st_std, title="ELMo", ylim=(90, 93), lloc=9)
 
-    # ## Flair
+    # ## Flair (fast)
     x_local = 100*0.8912
     x_local_std = 100*0.0012
     x_g_mean    = 100*np.array([0.9027, 0.9035, 0.9025, 0.9030, 0.9030, 0.9038, 0.9044, 0.9060, 0.9048, 0.9041, 0.9002])
@@ -90,6 +90,19 @@ if __name__ == '__main__':
     x_d_st_mean = 100*np.array([0.9016, 0.8999, 0.9014, 0.9007, 0.8997, 0.8986, 0.8987])
     x_d_st_std  = 100*np.array([0.0020, 0.0036, 0.0009, 0.0022, 0.0015, 0.0026, 0.0036])
     plot_results(x_local, x_local_std, x_g_mean, x_g_std, x_g_st_mean, x_g_st_std, x_d_mean, x_d_std, x_d_st_mean, x_d_st_std, title="Flair", ylim=(89, 92), lloc=9)
+
+    # ## Flair
+    # x_local = 100*0.0000
+    # x_local_std = 100*0.0000
+    # x_g_mean    = 100*np.array([0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000])
+    # x_g_std     = 100*np.array([0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000])
+    # x_g_st_mean = 100*np.array([0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000])
+    # x_g_st_std  = 100*np.array([0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000])
+    # x_d_mean    = 100*np.array([0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000])
+    # x_d_std     = 100*np.array([0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000])
+    # x_d_st_mean = 100*np.array([0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000])
+    # x_d_st_std  = 100*np.array([0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000])
+    # plot_results(x_local, x_local_std, x_g_mean, x_g_std, x_g_st_mean, x_g_st_std, x_d_mean, x_d_std, x_d_st_mean, x_d_st_std, title="Flair", ylim=(89, 92), lloc=9)
 
     # ## BERT - CONLL_GERMAN
     x_local = 100*0.8746

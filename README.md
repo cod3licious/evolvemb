@@ -36,12 +36,12 @@ evolving_emb.embed(sentence)
 If you need to save a snapshot of the embeddings without the dependence on the flair library, you can have a look at `emb_noflair.py` and the diachronic embedding example. The evolving embeddings will also be integrated into the flair library directly and the code will be maintained there.
 
 
-### Named Entity Recognition
-
-- `ner_experiments.py` contains the code to reproduce the NER results from the paper; it requires the files from the English and German CoNLL NER tasks in the respective folder.
-- `ner_paper_plots.py` contains the code to recreate the figures from the paper.
-
-
 ### Diachronic Embeddings
 
 To recreate the diachronic embedding results, first the article snippets need to be downloaded from the NYTimes API. For this the script `nytimes_make_dataset.py` can be used, which requires an API key in a file `nytimes_apikey.txt`. Once the dataset was created, the experiments can be executed in the notebook `nytimes_diachronic.ipynb`.
+
+
+### Named Entity Recognition (Supplementary Materials)
+
+- `ner_experiments.py` contains the code to reproduce the NER results from the paper; it requires the files from the English and German CoNLL NER tasks in the respective folder.
+- `ner_paper_plots.py` contains the code to recreate the figures from the paper.

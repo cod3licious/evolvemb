@@ -6,6 +6,7 @@ import numpy as np
 import copy as pycopy
 from copy import deepcopy
 from typing import List
+import flair
 from flair.data import Sentence
 from flair.models import SequenceTagger
 from flair.datasets import DataLoader, CONLL_03, CONLL_03_GERMAN
@@ -22,6 +23,7 @@ logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=lo
 # otherwise the dataset is embedded in the first epoch during the sequence tagger training; while the documents are in the correct order
 # (make sure you're using a recent flair version!!!), the test data is embedded after the dev data and the F1 score will be about 0.1 better
 EMBEDFIRST = True
+flair.embedding_storage_mode = "cpu"
 
 
 def preprocess_sentences(sentences: List[Sentence], to_lower=True, norm_num=True, num="0", copy=True):
@@ -40,13 +42,18 @@ def preprocess_corpus(corpus, to_lower=True, norm_num=True, num="0", copy=True):
     return temp_corpus
 
 
-def get_sentences(dataset="conll_en", to_lower=True):
+def get_sentences(dataset="conll_en", for_global=False):
     if dataset == "conll_de":
         corpus = CONLL_03_GERMAN("data")
     else:
         corpus = CONLL_03("data")
-    corpus = preprocess_corpus(corpus, to_lower=to_lower, norm_num=True, num="0", copy=False)
-    return [[t.text for t in sentence if t.text] for sentence in corpus._train]
+    if for_global:
+        corpus = preprocess_corpus(corpus, to_lower=True, norm_num=True, num="0", copy=False)
+        return [[t.text for t in sentence if t.text] for sentence in corpus._train]
+    else:
+        return [[t.text for t in sentence if t.text] for sentence in corpus._train] +\
+               [[t.text for t in sentence if t.text] for sentence in corpus._dev] +\
+               [[t.text for t in sentence if t.text] for sentence in corpus._test]
 
 
 def embed_dataset(dataset, embeddings):
@@ -110,6 +117,7 @@ def test_ner(base_path, embeddings, dataset="conll_en"):
     elif isinstance(embeddings, list):
         # embeddings can be a list of embeddings, then we want to use stacked embeddings
         embeddings = StackedEmbeddings(embeddings)
+    torch.cuda.empty_cache()
 
     # what tag do we want to predict?
     tag_type = "ner"
@@ -162,7 +170,7 @@ def eval_pooledAkbik2019(use_fast=True, use_glove=True, fn="", dataset="conll_en
         # also needs "if mode and not self.static_embeddings:" in train()
         embeddings[i].static_embeddings = True
     fname = "en_flair_pooled_fast%i_glove%i%s" % (int(use_fast), int(use_glove), fn)
-    test_ner(os.path.join("results/ner_context/", fname), embeddings, dataset=dataset)
+    test_ner(os.path.join("results/ner/", fname), embeddings, dataset=dataset)
     EMBEDFIRST = embedfirst_temp
 
 
@@ -210,7 +218,7 @@ def get_global_evolving(local_embeddings, evolving=True, alpha=None, dataset="co
             emb = EvolvingEmbeddings(local_embeddings, alpha=alpha, reset_token="-DOCSTART-")
             name = "evolvedoc%s" % str(alpha)
         else:
-            emb = EvolvingEmbeddings(local_embeddings, alpha=alpha, reset_token=None)
+            emb = EvolvingEmbeddings(local_embeddings, sentences=get_sentences(dataset, False), alpha=alpha, reset_token=None)
             name = "evolve%s" % str(alpha)
     else:
         emb = GlobalAvgEmbeddings(local_embeddings, get_sentences(dataset, True)).as_pretrained()
@@ -218,16 +226,23 @@ def get_global_evolving(local_embeddings, evolving=True, alpha=None, dataset="co
     return emb, name
 
 
-def eval_transformer(name="bert-base-uncased", fn="", dataset="conll_en"):
+def eval_transformer(name="bert-base-uncased", add_glove=False, fn="", dataset="conll_en"):
     """ run test_ner for a transformer model """
     embedding = get_transformer(name)
+    if add_glove:
+        if isinstance(embedding, list):
+            embedding.append(WordEmbeddings("glove"))
+        else:
+            embedding = [embedding, WordEmbeddings("glove")]
+        name = "%s+glove" % name
     fname = "%s_trans_local%s" % (name, fn)
-    test_ner(os.path.join("results/ner_context/", fname), embedding, dataset=dataset)
+    test_ner(os.path.join("results/ner/", fname), embedding, dataset=dataset)
 
 
 def eval_evolving_transformer(name="bert-base-uncased", add_glove=False, stacked=False, evolving=True, alpha=None, fn="", dataset="conll_en"):
     """ run test_ner for evolving embeddings based on a transformer model """
     local_embeddings = get_transformer(name)
+    name = name.split("-")[0]
     if isinstance(local_embeddings, list):
         global_emb, gname = get_global_evolving(StackedEmbeddings(deepcopy(local_embeddings)), evolving=evolving, alpha=alpha, dataset=dataset)
     else:
@@ -236,14 +251,14 @@ def eval_evolving_transformer(name="bert-base-uncased", add_glove=False, stacked
     if stacked or add_glove:
         global_emb = [global_emb]
         if add_glove:
-            global_emb.append(WordEmbeddings('glove'))
-            name = "glove+%s" % name
+            global_emb.append(WordEmbeddings("glove"))
+            name = "%s+glove" % name
     if stacked:
-        fname = "%s_%s_stacked_%s%s" % (dataset.split("_")[1], name.split("-")[0], gname, fn)
-        test_ner(os.path.join("results/ner_context/", fname), local_embeddings + global_emb, dataset=dataset)
+        fname = "%s_%s_stacked_%s%s" % (dataset.split("_")[1], name, gname, fn)
+        test_ner(os.path.join("results/ner/", fname), local_embeddings + global_emb, dataset=dataset)
     else:
-        fname = "%s_%s_%s%s" % (dataset.split("_")[1], name.split("-")[0], gname, fn)
-        test_ner(os.path.join("results/ner_context/", fname), global_emb, dataset=dataset)
+        fname = "%s_%s_%s%s" % (dataset.split("_")[1], name, gname, fn)
+        test_ner(os.path.join("results/ner/", fname), global_emb, dataset=dataset)
 
 
 if __name__ == '__main__':
@@ -257,6 +272,9 @@ if __name__ == '__main__':
                 dataset = "conll_en"
             # check transformer on its own, i.e., local embeddings
             eval_transformer(name=transformer, dataset=dataset)
+            # stack with GloVe embeddings (only available in English)
+            if dataset != "conll_de":
+                eval_transformer(name=transformer, add_glove=True, dataset=dataset)
             # in combination with evolving embeddings
             for stacked in [False, True]:
                 # eval_evolving_transformer(name=transformer, stacked=stacked, evolving=False, alpha=None, dataset=dataset)  # global non-evolving embeddings
@@ -276,6 +294,13 @@ if __name__ == '__main__':
                 np.random.seed(i)
                 eval_transformer(name=transformer, fn="_%i" % i, dataset=dataset)
                 torch.cuda.empty_cache()
+            # stack with GloVe embeddings (only available in English)
+            if dataset != "conll_de":
+                for i in range(3):
+                    torch.manual_seed(i)
+                    np.random.seed(i)
+                    eval_transformer(name=transformer, add_glove=True, fn="_%i" % i, dataset=dataset)
+                    torch.cuda.empty_cache()
             # in combination with evolving embeddings
             for stacked in [False, True]:
                 for alpha in [None, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.15, 0.2, 0.25, 0.34, 0.5, ("doc", None), ("doc", 0.25), ("doc", 0.34), ("doc", 0.5)]:
@@ -286,17 +311,7 @@ if __name__ == '__main__':
                         torch.cuda.empty_cache()
 
     if False:
-        # run flair with additional glove embeddings
-        for stacked in [False, True]:
-            for alpha in [None, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.15, 0.2, 0.25, 0.34, 0.5, ("doc", None), ("doc", 0.25), ("doc", 0.34), ("doc", 0.5)]:
-                for i in range(3):
-                    torch.manual_seed(i)
-                    np.random.seed(i)
-                    eval_evolving_transformer(name="flair", add_glove=True, stacked=stacked, evolving=True, alpha=alpha, fn="_%i" % i, dataset="conll_en")
-                    torch.cuda.empty_cache()
-
-    if False:
-        # use original pooled embeddings
+        # use original pooled embeddings (requires a new flair version)
         for use_fast in [True, False]:
             for use_glove in [False, True]:
                 for i in range(3):
