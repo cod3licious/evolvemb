@@ -1,0 +1,13 @@
+flair>=0.8.0
+numpy
+scipy
+matplotlib
+pandas
+scikit-learn
+torch
+segtok
+gensim
+transformers>=4.0.0
+plotly
+dash
+requests

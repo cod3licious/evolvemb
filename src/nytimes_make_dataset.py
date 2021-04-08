@@ -82,7 +82,7 @@ def download_nytimes_archive(year, month):
         raise RuntimeError("Please request an API key for the NYTimes Archive API from https://developer.nytimes.com/ "
                            "and save it in a file called 'nytimes_apikey.txt'")
     # download articles for given month and year
-    url = "https://api.nytimes.com/svc/archive/v1/%i/%i.json" % (year, month)
+    url = f"https://api.nytimes.com/svc/archive/v1/{year}/{month}.json"
     response = requests.get(url, params={"api-key": api_key}).json()['response']
     assert len(response['docs']) == response['meta']['hits'], "did not receive all articles..."
     texts = []
@@ -94,14 +94,14 @@ def download_nytimes_archive(year, month):
         if headline and headline[-1].isalnum():
             # the headline should end with a punctuation mark to ensure it counts as a different sentence
             headline = headline + " ."
-        article_text = "%s %s" % (headline, abstract)
+        article_text = f"{headline} {abstract}"
         # filter out some of the less informative articles
         if len(article_text) > 50:
-            texts.append("%s\t%s\n" % (article['pub_date'].split('T')[0], article_text.strip()))
+            texts.append(f"{article['pub_date'].split('T')[0]}\t{article_text.strip()}\n")
     return texts
 
 
-def get_articles(date_begin="2019-01", date_end="2020-12", fname="data/nytimes_dataset.txt"):
+def get_articles(date_begin="2019-01", date_end="2020-12", fname="../data/nytimes_dataset.txt"):
     """
     download monthly articles from NYTimes between date_begin and date_end (both inclusive) and save in file
 
@@ -114,7 +114,7 @@ def get_articles(date_begin="2019-01", date_end="2020-12", fname="data/nytimes_d
     texts = []
     year, month = year_begin, month_begin
     while (year < year_end) or (year == year_end and month <= month_end):
-        print("downloading %i-%02i" % (year, month))
+        print(f"downloading {year}-{month:02}")
         texts = download_nytimes_archive(year, month)
         with open(fname, "a") as f:
             f.writelines(texts)

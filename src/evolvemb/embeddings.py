@@ -1,13 +1,12 @@
-import re
-import unicodedata
 import numpy as np
 import torch
-from collections import Counter
 from typing import List, Optional, Union
 from sklearn.metrics.pairwise import cosine_similarity
 from gensim.models import KeyedVectors
 from flair.data import Sentence
 from flair.embeddings import TokenEmbeddings
+
+from .base import EmbeddingInputModel, SimplePretrainedEmbeddings
 
 
 class DummyEmbeddings(TokenEmbeddings):
@@ -35,32 +34,6 @@ class DummyEmbeddings(TokenEmbeddings):
         return sentences
 
 
-def _preprocess_token(text, to_lower=True, norm_num=True, num="0"):
-    # no non-ascii characters
-    nfkd_form = unicodedata.normalize("NFKD", text)
-    text = nfkd_form.encode("ASCII", "ignore").decode("ASCII")
-    if to_lower:
-        # all lower case
-        text = text.lower()
-    if norm_num:
-        # normalize numbers
-        text = re.sub(r"\d", num, text)
-    return text.strip()
-
-
-def _generate_preprocessed_tokens(text):
-    yield text                                    # original text
-    t = _preprocess_token(text, False, False)     # without weird characters
-    yield t
-    yield t.lower()                               # lower case
-    yield t.title()                               # title case
-    if not t.isalpha():                           # different number normalizations
-        yield re.sub(r"\d", "0", t.lower())
-        yield re.sub(r"\d", "#", t.lower())
-        yield re.sub(r"\d", "0", t)
-        yield re.sub(r"\d", "#", t)
-
-
 def _get_sentence_embeddings_flair(embedding, sentence):
     # transform list of words into flair sentence object (with custom tokenizer to make sure the tokens match!)
     s = Sentence("\t".join(sentence), use_tokenizer=lambda x: x.split("\t"))
@@ -68,55 +41,6 @@ def _get_sentence_embeddings_flair(embedding, sentence):
     embedding.embed(s)
     # extract and return embedding matrix
     return np.vstack([t.embedding.cpu().detach().numpy() for t in s])
-
-
-class EmbeddingInputModel:
-
-    def __init__(self, sentences, min_freq=1, n_tokens=None, verbose=1):
-        """
-        Initialize the EmbeddingInputModel by letting it check the sentences to generate
-        a mapping from token to index and vice versa (used e.g. to index the all the embeddings here)
-
-        :param sentences: a list of lists of words
-        :param min_freq: how often a token needs to occur to be considered as a feature
-        :param n_tokens: how many tokens to keep at most (might be less depending on min_freq; default: all)
-        :param verbose: whether to generate warnings (default: 1)
-        """
-        self.min_freq = min_freq
-        self.token_counts = Counter(t for sentence in sentences for t in sentence)
-        self.index2token = [t for t, c in self.token_counts.most_common(n_tokens) if c >= min_freq]
-        if not self.index2token and verbose:
-            print("[EmbeddingInputModel] WARNING: no tokens with frequency >= %i" % min_freq)
-        self.token2index = {t: i for i, t in enumerate(self.index2token)}
-
-    @property
-    def n_tokens(self) -> int:
-        return len(self.index2token)
-
-    def update_index(self, sentence):
-        # possibly add the tokens from the new sentence to the index
-        for token in set(sentence):
-            if token not in self.token2index:
-                self.token2index[token] = len(self.index2token)
-                self.index2token.append(token)
-
-    def get_token(self, token_text, default=None):
-        # get the closest matching token in our vocab
-        if token_text is None:
-            return default
-        for t in _generate_preprocessed_tokens(token_text):
-            if t in self.token2index:
-                return t
-        return default
-
-    def get_index(self, token_text, default=-1):
-        # get the index of the closest matching token in our vocab
-        if token_text is None:
-            return default
-        for t in _generate_preprocessed_tokens(token_text):
-            if t in self.token2index:
-                return self.token2index[t]
-        return default
 
 
 class PretrainedEmbeddings(TokenEmbeddings):
@@ -158,6 +82,9 @@ class PretrainedEmbeddings(TokenEmbeddings):
     def __getitem__(self, token):
         # get embedding for a single token (text) as a numpy array with -1 = OOV
         return self.embeddings[self.input_model.get_index(token)]
+
+    def as_simple_pretrained(self):
+        return SimplePretrainedEmbeddings(self.embeddings.copy(), self.input_model, include_oov=False)
 
     def _add_embeddings_internal(self, sentences: List[Sentence]) -> List[Sentence]:
         for sentence in sentences:

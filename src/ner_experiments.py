@@ -14,7 +14,8 @@ from flair.trainers import ModelTrainer
 from flair.training_utils import store_embeddings
 from flair.embeddings import WordEmbeddings, TransformerWordEmbeddings, ELMoEmbeddings, FlairEmbeddings, StackedEmbeddings, PooledFlairEmbeddings
 
-from evolvemb import DummyEmbeddings, GlobalAvgEmbeddings, EvolvingEmbeddings, _preprocess_token
+from evolvemb.base import _preprocess_token
+from evolvemb.embeddings import DummyEmbeddings, GlobalAvgEmbeddings, EvolvingEmbeddings
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
@@ -192,7 +193,7 @@ def get_transformer(name="bert-base-uncased"):
     else:
         # name: bert-base-uncased; roberta-base
         # bert-base-german-cased for german conll task
-        embedding = TransformerWordEmbeddings(name, layers="all", use_scalar_mix=True, pooling_operation="mean", fine_tune=False)
+        embedding = TransformerWordEmbeddings(name, layers="all", layer_mean=True, subtoken_pooling="mean", fine_tune=False)
     return embedding
 
 
