@@ -198,7 +198,7 @@ def analyze_emb_over_time(snapshot_emb, token, k=5, savefigs=""):
     })
     fig_time = px.line(df_temp, x="snapshot date", y="cosine similarity",
                        color="token", color_discrete_map=color_plotly, hover_name="token",
-                       line_dash="line", line_dash_map='identity')
+                       line_dash="line", line_dash_map='identity', height=500)
 
     # plot 2D PCA vis of embeddings
     full_embedding_mat = []
@@ -225,6 +225,6 @@ def analyze_emb_over_time(snapshot_emb, token, k=5, savefigs=""):
         plt.savefig(f"{savefigs}_{token}_{snapshots[0]}_{snapshots[-1]}_pca.pdf", dpi=300, bbox_inches="tight")
 
     # interactive with plotly
-    fig_pca = px.scatter(x=X_kpca[:, 0], y=X_kpca[:, 1], color=color_keys, size=np.sqrt(size), color_discrete_map=color_plotly, hover_name=labels)
+    fig_pca = px.scatter(x=X_kpca[:, 0], y=X_kpca[:, 1], color=color_keys, size=np.sqrt(size), color_discrete_map=color_plotly, hover_name=labels, height=500, width=650)
     fig_pca.update_traces(hovertemplate='%{hovertext}')  # only show our text, no additional info
     return fig_time, fig_pca

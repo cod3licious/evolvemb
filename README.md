@@ -29,7 +29,7 @@ for s in sentences:
 # get embedding vector for a word of interest as a numpy array
 emb_vector = evolving_emb["sentence"]
 
-# ## working with Flair data structures (--> see also NER example)
+# ## working with Flair data structures
 from flair.data import Sentence
 # make a flair sentence
 sentence = Sentence('I love Berlin .')
@@ -68,9 +68,3 @@ In addition to the `evolvemb` library code, the repository also contains all nec
 ### Diachronic Embeddings from NYTimes Article Snippets
 
 To recreate the diachronic embedding results, first the article snippets need to be downloaded from the NYTimes API. For this the script `nytimes_make_dataset.py` can be used, which requires an API key in a file `nytimes_apikey.txt` and saves the final dataset at `data/nytimes_dataset.txt` (see `data/nytimes_dataset_excerpt.txt` for a preview of how the full dataset is structured). Once the dataset was created, the experiments can be executed in the notebook `nytimes_diachronic.ipynb` (and `nytimes_diachronic_gensim.ipynb`).
-
-
-### Named Entity Recognition (Appendix)
-
-- `ner_experiments.py` contains the code to reproduce the NER results from the paper; it requires the files from the English and German CoNLL NER tasks in the respective folder.
-- `ner_paper_plots.py` contains the code to recreate the figures from the paper.

@@ -38,14 +38,14 @@ _, most_changed_zeros = get_most_changed_tokens(k=25, ignore_zeros=False)
 # define layout
 app.layout = html.Div(style={'backgroundColor': colors['background']}, children=[
     html.H1(
-        children='Continuously Evolving Diachronic Embeddings',
+        children='Continuously Evolving Embeddings',
         style={
             'textAlign': 'center',
             'color': colors['text']
         }
     ),
 
-    html.H5(children='Explore semantic shift and word usage change in recent New York Times article snippets. Based on a pre-trained BERT model from HuggingFace, fine-tuned on the NYTimes article snippets.', style={
+    html.H5(children='Explore semantic shift and word usage change over time.', style={
         'textAlign': 'center',
         'color': colors['text']
     }),
@@ -78,14 +78,17 @@ app.layout = html.Div(style={'backgroundColor': colors['background']}, children=
                 'color': colors['text']
              }),
     html.Br(),
+    html.Div([
 
-    dcc.Graph(
-        id='timeline-graph'
-    ),
+        dcc.Graph(
+            id='timeline-graph'
+        ),
 
-    dcc.Graph(
-        id='pca-graph'
-    )
+        dcc.Graph(
+            id='pca-graph'
+        )
+    ],
+        style={'columnCount': 2})
 ])
 
 
