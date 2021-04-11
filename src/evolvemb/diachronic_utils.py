@@ -12,9 +12,39 @@ from .base import SimplePretrainedEmbeddings
 from .embeddings import EvolvingEmbeddings, DummyEmbeddings
 
 
+def load_diachronic_dataset(datapath="data/nytimes_dataset.txt", start_date="2019-01-01", end_date="2020-12-31"):
+    """
+    Read in a diachronic dataset with "%Y-%m-%d\tsentence" per line
+
+    Inputs:
+        - datapath [str]: path to a dataset with tab-separated dates (in the same format as start/end_date)
+                and sentences. Since these sentences will later be passed as is to the transformer,
+                they shouldn't be too long, i.e., not whole documents. (default: "data/nytimes_dataset.txt")
+        - start_date [str]: earliest date at and after which the sentences should be taken (default: "2019-01-01")
+        - end_date [str]: latest date until which the sentences should be included (default: "2020-12-31")
+    Returns:
+        - sentences [list: [list: str]]: list of sentences (as lists of words) in chronological order
+        - dates [list: str]: list of the same length as sentences with corresponding dates
+    """
+    sentences = []
+    dates = []
+    with open(datapath) as f:
+        for line in f:
+            d, s = line.strip().split("\t")
+            if d < start_date:
+                continue
+            elif d > end_date:
+                break
+            dates.append(d)
+            # lowercase! and some longer words mistakenly can end with "." due to the tokenizer; remove this!
+            sentences.append([w if len(w) <= 3 or not w.endswith(".") else w[:-1] for w in s.lower().split()])
+    print(f"Dataset contains {len(sentences)} sentences between {start_date} and {end_date}")
+    return sentences, dates
+
+
 def compute_emb_snapshots(sentences, dates, snapshots, local_emb_name="dummy", min_freq=100, n_tokens=10000):
     """
-    Compute embedding snapshot from the given sentences.
+    Compute embedding snapshot from the given sentences (as returned by load_diachronic_dataset).
 
     Inputs:
         - sentences [list: [list: str]]: list of sentences (as lists of words) in chronological order
