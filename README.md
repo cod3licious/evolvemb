@@ -1,6 +1,6 @@
 # Continuously Evolving Embeddings
 
-This repository contains code to compute continuously evolving word embeddings as weighted running averages from contextualized embeddings (e.g. computed by transformer models such as BERT). Specifically, these embeddings can be used as continuous diachronic embeddings to study the semantic shift and usage change of words over time as described in our paper.
+This repository contains code to compute continuously evolving word embeddings as weighted running averages of contextualized embeddings (e.g. computed by a transformer model such as BERT). Specifically, these embeddings can be used as continuous diachronic embeddings to study the semantic shift and usage change of words over time as described in our paper.
 
 
 ## Library Usage
@@ -37,20 +37,20 @@ sentence = Sentence('I love Berlin .')
 evolving_emb.embed(sentence)
 ```
 
-If you need to save the final embeddings without the dependence on the flair library, you can have a look at the `SimplePretrainedEmbeddings` class in `evolvemb/base.py` and the diachronic embedding example.
+If you need to save the final embeddings without the dependency on the flair library, you can have a look at the `SimplePretrainedEmbeddings` class in `evolvemb/base.py` and the diachronic embedding example.
 
 
 ### Exploring Diachronic Embeddings
 
-The following steps need to be executed to explore diachronic embeddings created from your own dataset in a local dash web app with interactive graphics. See `data/nytimes_dataset_excerpt.txt` for a preview of how the full `nytimes_dataset.txt` file, that is used in the examples, looks like.
+The following steps need to be executed to explore diachronic embeddings created from your own dataset in a local dash web app with interactive graphics. See `data/nytimes_dataset_excerpt.txt` for a preview of how the full `nytimes_dataset.txt` file used in the examples looks like.
 
-1. [Optional (but advised)] **Fine-tune Transformer Model**: especially if your data is very different from any of the available pre-trained HuggingFace models, consider fine tuning a related model checkpoint on your dataset. The `finetune_huggingface.ipynb` notebook contains code for how we did this on our NYTimes dataset.
+1. [Optional (but advised)] **Fine-tune Transformer Model**: especially if your data is very different from any of the available pre-trained HuggingFace models, consider fine-tuning a related model checkpoint on your dataset. The `finetune_huggingface.ipynb` notebook contains code for how we did this on our NYTimes dataset.
 
 2. **Dataset Preparation & Computation of Continuously Evolving Embedding Snapshots**: see `nytimes_diachronic.ipynb` for an example of how to do this.
 The embedding snapshots can be computed with the function `compute_emb_snapshots` from `evolvemb`. The function requires as input:
     - `sentences`: a list of sentences, where a sentence is represented as a list of words (possibly preprocessed, i.e., strings will be passed as is to the transformer model). The sentences have to be in chronological order (i.e., oldest first), corresponding to the dates (see below).
-    - `dates`: a list of dates (as strings) of the same length as `sentences`, i.e., each date corresponds to the respective sentence in the previous list. The date strings should be written in a format that can easily be compared, e.g., `'%Y-%m-%d'` (-> `'2021-02-16'`). If your dataset is in the same format as our original dataset (see `data/nytimes_dataset_excerpt.txt` for and example in this format), then you can also use the function `load_diachronic_dataset` to read in your data and generate the `sentences` and `dates` lists.
-    - `snapshots`: a list of strings with dates after which the snapshot should be saved; in the same format as the strings in `dates`. For example, `snapshots=['2020-01-31', '2020-02-31', '2020-03-31']` will result in 3 embedding snapshots that are saved at the end of each of Jan/Feb/Mar 2020. It doesn't matter that the snapshots contain impossible dates, e.g., the snapshot for `'2020-02-31'` is simply taken before the first sentence with the date `'2020-03-01'` is processed.
+    - `dates`: a list of dates (as strings) of the same length as `sentences`, i.e., each date corresponds to the respective sentence in the previous list. The date strings should be written in a format that can easily be compared, e.g., `'%Y-%m-%d'` (-> `'2021-02-16'`). If your dataset is in the same format as our original dataset (see `data/nytimes_dataset_excerpt.txt`), then you can also use the function `load_diachronic_dataset` to read in your data and generate the `sentences` and `dates` lists.
+    - `snapshots`: a list of strings with dates after which the snapshot should be saved; in the same format as the strings in `dates`. For example, `snapshots=['2020-01-31', '2020-02-31', '2020-03-31']` will result in 3 embedding snapshots that are saved at the end of Jan/Feb/Mar 2020 respectively. It doesn't matter that the snapshots contain impossible dates, e.g., the snapshot for `'2020-02-31'` is simply taken before the first sentence with the date `'2020-03-01'` is processed.
     - `local_emb_name`: this will be passed as the checkpoint name to the transformer model. By default, random embeddings are used, which can be helpful to quickly test your code without applying the transformer to all your sentences.
 
     The `compute_emb_snapshots` function then returns a dictionary with `{'snapshot-date': SimplePretrainedEmbeddings}` where the snapshot dates consist of the actual dates where the snapshots were taken (e.g. `'2020-02-28'` instead of `'2020-02-31'`) and the embeddings themselves are `SimplePretrainedEmbeddings` from `evolvemb/base.py`, which is a convenience format to easily access embeddings in a numpy array with keys, e.g., `snapshot_emb['2020-02-28']['banana']` could give you the snapshot of the embedding for the word 'banana' at the end of February 2020. <br>
@@ -62,4 +62,4 @@ The web app and plots can also easily be created using other diachronic embeddin
 
 ## Reproducing the Results from the Paper
 
-In addition to the `evolvemb` library code, the repository also contains all necessary scripts to reproduce the results from our paper: first the New York Times article snippets need to be downloaded from the NYTimes API. For this the script `nytimes_make_dataset.py` can be used, which requires an API key in a file `nytimes_apikey.txt` and saves the final dataset at `data/nytimes_dataset.txt` (see `data/nytimes_dataset_excerpt.txt` for a preview of how the full dataset is structured). Once the dataset was created, the experiments can be executed in the notebook `nytimes_diachronic.ipynb` (and `nytimes_diachronic_gensim.ipynb`). Please note that the date given for some NYTimes article snippets is noisy, because an article can be updated again at a much later date without this being reflected in the data obtained from the API.
+In addition to the `evolvemb` library, this repository also contains all necessary code to reproduce the results from our paper: first the New York Times article snippets need to be downloaded from the NYTimes API. For this the script `nytimes_make_dataset.py` can be used, which requires an API key in a file `nytimes_apikey.txt` and saves the final dataset at `data/nytimes_dataset.txt` (see `data/nytimes_dataset_excerpt.txt` for a preview of how the full dataset is structured). Once the dataset was created, the experiments can be executed in the notebook `nytimes_diachronic.ipynb` (and `nytimes_diachronic_gensim.ipynb`). Please note that the date given for some NYTimes article snippets is noisy, because an article can be updated again at a much later date without this being reflected in the data obtained from the API (this becomes noticeable, for example, when looking at the plots for 'coronavirus').
