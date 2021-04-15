@@ -4,6 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import plotly.express as px
 from datetime import datetime
+from scipy.stats import spearmanr
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.decomposition import KernelPCA
 from flair.embeddings import TransformerWordEmbeddings
@@ -107,34 +108,48 @@ def compute_emb_snapshots(sentences, dates, snapshots, local_emb_name="dummy", m
     return snapshot_emb
 
 
-def most_changed_tokens(snapshot_emb, ignore_zeros=True):
+def list_new_tokens(snapshot_emb):
     """
-    Check which tokens have changed the most over time.
+    Check which tokens have appeared only after the first snapshot was taken (i.e. newly coined words); sorted by counts.
+    Only works if words have a zero embedding before they first occurred
+    (i.e. wont yield any results for the SGNS approach if that had a warm start (pre-trained on the whole corpus))
 
     Inputs:
         - snapshot_emb [dict: {str: SimplePretrainedEmbeddings}]: embedding snapshots for all snapshot dates (as computed with compute_emb_snapshots)
-        - ignore_zeros [bool]: whether to ignore tokens that only started occurring after the first snapshot, i.e., trivial changes (default: True)
 
     Returns:
-        - [list: (str, simscore)]: list of tokens and associated score with most changed tokens first
+        - [list: (str, count)]: list of tokens and associated counts with the most frequently used tokens first
     """
-    # find the tokens whos embedding has changed the most over the whole time period
+    snapshots = sorted(snapshot_emb)
+    # counts for each token: -1 for established words (first snapshot emb != 0), actual count for new words
+    token_counts = [-1 if np.any(snapshot_emb[snapshots[0]][t]) != 0 else snapshot_emb[snapshots[0]].input_model.token_counts[t] for t in snapshot_emb[snapshots[0]].input_model.index2token]
+    # sort tokens: largest count first
+    token_idx = np.argsort(token_counts)[::-1]
+    tokens = [(snapshot_emb[snapshots[0]].input_model.index2token[i], token_counts[i]) for i in token_idx if token_counts[i] > 0]
+    return [t for t in tokens if t[0].isalnum()]
+
+
+def list_multiple_meanings_tokens(snapshot_emb):
+    """
+    Check which tokens have changed the most over time in general (ignoring new words).
+    This can reveal multiple meanings and seasonal patterns.
+
+    Inputs:
+        - snapshot_emb [dict: {str: SimplePretrainedEmbeddings}]: embedding snapshots for all snapshot dates (as computed with compute_emb_snapshots)
+
+    Returns:
+        - [list: (str, simscore)]: list of tokens and associated scores with most changed tokens first
+    """
     snapshots = sorted(snapshot_emb)
     token_sim = []
     for t in snapshot_emb[snapshots[0]].input_model.index2token:
-        # ignore the zero embeddings
-        if ignore_zeros:
+        # ignore new words
+        if np.any(snapshot_emb[snapshots[0]][t]) != 0:
             token_emb = np.vstack([snapshot_emb[s][t] for s in snapshots if np.any(snapshot_emb[s][t] != 0)])
-        else:
-            token_emb = np.vstack([snapshot_emb[s][t] for s in snapshots])
-        # overall sim = min/mean of upper triangular similarity values
-        # -> take into account similarity of all emb to one another at all time points
-        if token_emb.shape[0] > 1:
+            # overall sim = min of upper triangular similarity values
+            # -> take into account similarity of all emb to one another at all time points
             sim = cosine_similarity(token_emb)
-            if ignore_zeros:
-                token_sim.append(sim[np.triu_indices(sim.shape[0], k=1)].min())
-            else:
-                token_sim.append(sim[np.triu_indices(sim.shape[0], k=1)].mean())
+            token_sim.append(sim[np.triu_indices(sim.shape[0], k=1)].min())
         else:
             token_sim.append(1)
     # sort index from smallest to largest - the more different the word, the smaller the sim
@@ -143,7 +158,37 @@ def most_changed_tokens(snapshot_emb, ignore_zeros=True):
     return [t for t in tokens if t[0].isalnum()]
 
 
-def analyze_emb_over_time(snapshot_emb, token, k=5, savefigs=""):
+def list_semantic_shift_tokens(snapshot_emb):
+    """
+    Check which tokens have undergone a continuous semantic shift over time (ignoring new words).
+
+    Inputs:
+        - snapshot_emb [dict: {str: SimplePretrainedEmbeddings}]: embedding snapshots for all snapshot dates (as computed with compute_emb_snapshots)
+
+    Returns:
+        - [list: (str, simscore)]: list of tokens and associated scores with most changed tokens first
+    """
+    snapshots = sorted(snapshot_emb)
+    token_sim = []
+    for t in snapshot_emb[snapshots[0]].input_model.index2token:
+        # ignore new words
+        if np.any(snapshot_emb[snapshots[0]][t]) != 0:
+            token_emb = np.vstack([snapshot_emb[s][t] for s in snapshots if np.any(snapshot_emb[s][t] != 0)])
+            # compute similarity of snapshots to the last snapshot
+            sim = cosine_similarity(token_emb, token_emb[[-1]]).flatten()
+            # compute the difference between consecutive similarities to see if there was an increase or decrease
+            diff = sim[1:] - sim[:-1]
+            # check the over all change and subtract from it the overall decrease
+            token_sim.append((sim[-1] - sim[0]) + np.sum(diff[diff < 0]))
+        else:
+            token_sim.append(-1)
+    # sort index from largest to smallest - the more continuous the shift, the higher the spearman rank corr
+    token_idx = np.argsort(token_sim)[::-1]
+    tokens = [(snapshot_emb[snapshots[0]].input_model.index2token[i], token_sim[i]) for i in token_idx]
+    return [t for t in tokens if t[0].isalnum()]
+
+
+def plot_emb_over_time(snapshot_emb, token, k=5, savefigs="", savestyle=2):
     """
     Generate time lines and PCA plots for the given token.
 
@@ -152,6 +197,7 @@ def analyze_emb_over_time(snapshot_emb, token, k=5, savefigs=""):
         - tokens [str]: the token for which the plots should be generated
         - k [int]: how many nearest neighbors should be included in the plots at most (default: 5)
         - savefigs [str]: if given, save matplotlib figures at "savefigs_token_...pdf"
+        - savestyle [int]: 1: save only plot over time for 1 column paper, 2: save time + pca (default)
 
     Returns:
         - fig_time, fig_pca: the two plotly figures (or None, None if token was not in embedding snapshots)
@@ -210,12 +256,15 @@ def analyze_emb_over_time(snapshot_emb, token, k=5, savefigs=""):
 
     if savefigs:
         snapshot_dates = list(range(len(snapshots)))
-        plt.figure(figsize=(8, 5))
+        if savestyle < 2:
+            plt.figure(figsize=(5, 5))
+        else:
+            plt.figure(figsize=(8, 5))
         for t in plot_tokens:
             plt.plot(snapshot_dates, sim_scores[t], "--" if t == f"{token} ({first})" else "-", color=colors[t], label=t)
         l = plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', borderaxespad=0., fontsize=14)
-        plt.xticks(snapshot_dates, snapshots, rotation=90 if len(snapshots) > 5 else 0)
-        plt.ylabel("cosine similarity")
+        plt.xticks(snapshot_dates, snapshots, rotation=90 if len(snapshots) > 5 else 0, fontsize=13)
+        plt.ylabel("cosine similarity", fontsize=13)
         # plt.title(token)
         plt.savefig(f"{savefigs}_{token}_{snapshots[0]}_{snapshots[-1]}_time.pdf", dpi=300, bbox_inches="tight", bbox_extra_artists=[l])
 
@@ -244,13 +293,13 @@ def analyze_emb_over_time(snapshot_emb, token, k=5, savefigs=""):
     X_kpca = KernelPCA(n_components=2, kernel="cosine").fit_transform(full_embedding_mat)
 
     # with matplotlib
-    if savefigs:
+    if savestyle > 1 and savefigs:
         plt.figure(figsize=(6, 6))
         plt.scatter(x=X_kpca[:, 0], y=X_kpca[:, 1], s=10*np.array(size), c=[colors[t] for t in color_keys], alpha=0.6)
         plt.xticks([], [])
         plt.yticks([], [])
-        plt.xlabel("PC 1")
-        plt.ylabel("PC 2")
+        plt.xlabel("PC 1", fontsize=13)
+        plt.ylabel("PC 2", fontsize=13)
         # plt.title(token)
         plt.savefig(f"{savefigs}_{token}_{snapshots[0]}_{snapshots[-1]}_pca.pdf", dpi=300, bbox_inches="tight")
 

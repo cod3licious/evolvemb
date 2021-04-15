@@ -103,7 +103,9 @@ def download_nytimes_archive(year, month):
 
 def get_articles(date_begin="2019-01", date_end="2020-12", fname="../data/nytimes_dataset.txt"):
     """
-    download monthly articles from NYTimes between date_begin and date_end (both inclusive) and save in file
+    Download monthly articles from NYTimes between date_begin and date_end (both inclusive) and save in file.
+    Please note that the date given for some NYTimes article snippets is noisy, because an article can be updated
+    again at a much later date without this being reflected in the data obtained from the API.
 
     Inputs:
         date_begin, date_end: strings with dates in the format "%YYYY-%MM", e.g. '2017-01'
