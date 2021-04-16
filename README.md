@@ -42,7 +42,7 @@ If you need to save the final embeddings without the dependency on the flair lib
 
 ### Exploring Diachronic Embeddings
 
-The following steps need to be executed to explore diachronic embeddings created from your own dataset in a local dash web app with interactive graphics. See `data/nytimes_dataset_excerpt.txt` for a preview of how the full `nytimes_dataset.txt` file used in the examples looks like.
+The following steps need to be executed to explore diachronic embeddings created from your own dataset in a local dash web app with interactive graphics (see [screencast](https://youtu.be/ltF67J-la7I) for a demonstration). See `data/nytimes_dataset_excerpt.txt` for a preview of how the full `nytimes_dataset.txt` file used in the examples looks like.
 
 1. [Optional (but advised)] **Fine-tune Transformer Model**: especially if your data is very different from any of the available pre-trained HuggingFace models, consider fine-tuning a related model checkpoint on your dataset. The `finetune_huggingface.ipynb` notebook contains code for how we did this on our NYTimes dataset.
 
