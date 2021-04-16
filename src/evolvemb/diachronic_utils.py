@@ -4,7 +4,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import plotly.express as px
 from datetime import datetime
-from scipy.stats import spearmanr
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.decomposition import KernelPCA
 from flair.embeddings import TransformerWordEmbeddings
