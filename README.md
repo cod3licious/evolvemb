@@ -67,7 +67,7 @@ In addition to the `evolvemb` library, this repository also contains all necessa
 
 ## Citing the Paper
 
-If any of this code was helpful for you, please consider citing the [paper](https://aclanthology.org/2021.acl-demo.35):
+If you found any of this code helpful, please consider citing the [paper](https://aclanthology.org/2021.acl-demo.35):
 
 ```
 @inproceedings{horn2021exploring,
