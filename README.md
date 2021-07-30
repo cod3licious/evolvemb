@@ -1,6 +1,6 @@
 # Continuously Evolving Embeddings
 
-This repository contains code to compute continuously evolving word embeddings as weighted running averages of contextualized embeddings (e.g. computed by a transformer model such as BERT). Specifically, these embeddings can be used as continuous diachronic embeddings to study the semantic shift and usage change of words over time as described in our [paper](10.18653/v1/2021.acl-demo.35).
+This repository contains code to compute continuously evolving word embeddings as weighted running averages of contextualized embeddings (e.g. computed by a transformer model such as BERT). Specifically, these embeddings can be used as continuous diachronic embeddings to study the semantic shift and usage change of words over time as described in our [paper](https://aclanthology.org/2021.acl-demo.35).
 
 
 ## Library Usage
@@ -67,7 +67,7 @@ In addition to the `evolvemb` library, this repository also contains all necessa
 
 ## Citing the Paper
 
-If any of this code was helpful for you, please consider citing the [paper](10.18653/v1/2021.acl-demo.35):
+If any of this code was helpful for you, please consider citing the [paper](https://aclanthology.org/2021.acl-demo.35):
 
 ```
 @inproceedings{horn2021exploring,
