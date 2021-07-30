@@ -1,6 +1,6 @@
 # Continuously Evolving Embeddings
 
-This repository contains code to compute continuously evolving word embeddings as weighted running averages of contextualized embeddings (e.g. computed by a transformer model such as BERT). Specifically, these embeddings can be used as continuous diachronic embeddings to study the semantic shift and usage change of words over time as described in our paper.
+This repository contains code to compute continuously evolving word embeddings as weighted running averages of contextualized embeddings (e.g. computed by a transformer model such as BERT). Specifically, these embeddings can be used as continuous diachronic embeddings to study the semantic shift and usage change of words over time as described in our [paper](10.18653/v1/2021.acl-demo.35).
 
 
 ## Library Usage
@@ -63,3 +63,23 @@ The web app and plots can also easily be created using other diachronic embeddin
 ## Reproducing the Results from the Paper
 
 In addition to the `evolvemb` library, this repository also contains all necessary code to reproduce the results from our paper: first the New York Times article snippets need to be downloaded from the NYTimes API. For this the script `nytimes_make_dataset.py` can be used, which requires an API key in a file `nytimes_apikey.txt` and saves the final dataset at `data/nytimes_dataset.txt` (see `data/nytimes_dataset_excerpt.txt` for a preview of how the full dataset is structured). Once the dataset was created, the experiments can be executed in the notebook `nytimes_diachronic.ipynb` (and `nytimes_diachronic_gensim.ipynb`). Please note that the date given for some NYTimes article snippets is noisy, because an article can be updated again at a much later date without this being reflected in the data obtained from the API (this becomes noticeable, for example, when looking at the plots for 'coronavirus').
+
+
+## Citing the Paper
+
+If any of this code was helpful for you, please consider citing the [paper](10.18653/v1/2021.acl-demo.35):
+
+```
+@inproceedings{horn2021exploring,
+    title = "Exploring Word Usage Change with Continuously Evolving Embeddings",
+    author = "Franziska Horn",
+    booktitle = "Proceedings of the 59th Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing: System Demonstrations",
+    month = aug,
+    year = "2021",
+    address = "Online",
+    publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/2021.acl-demo.35",
+    doi = "10.18653/v1/2021.acl-demo.35",
+    pages = "290--297",
+}
+```
