@@ -72,7 +72,7 @@ If you found any of this code helpful, please consider citing the [paper](https:
 ```
 @inproceedings{horn2021exploring,
     title = "Exploring Word Usage Change with Continuously Evolving Embeddings",
-    author = "Franziska Horn",
+    author = "Horn, Franziska",
     booktitle = "Proceedings of the 59th Annual Meeting of the Association for Computational Linguistics and the 11th International Joint Conference on Natural Language Processing: System Demonstrations",
     month = aug,
     year = "2021",
